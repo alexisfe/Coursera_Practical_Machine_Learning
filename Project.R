@@ -11,38 +11,31 @@ dep_var = "classe"
 data <- read.csv(data_csv_link)
 eval_data <- read.csv(test_csv_link)
 
-#Identify and remove poor predictors using near zero variance
-good_preds <- row.names(subset(nearZeroVar(data, saveMetrics = TRUE), nzv == FALSE))
-
-data <- data[, good_preds]
-
-eval_data <- eval_data[, good_preds[good_preds != dep_var]]
-
-inTrain <- createDataPartition(data[, dep_var], p = 3/4)[[1]]
+inTrain <- createDataPartition(data[, dep_var], p = 0.8)[[1]]
 train <- data[inTrain,]
 test <- data[-inTrain,]
 
+#Select only predictor variables
 train_pred <- train[, -which(names(train) == dep_var)]
 test_pred <- test[, -which(names(test) == dep_var)]
 
-train.ctrl <- trainControl(method="cv", number=5) #Cross-validation using 5 folds
+#Cross-validate using 10 folds
+train.ctrl <- trainControl(method="cv", number=10) 
 
-train_pca <- predict(preProcess(train_pred, method="pca", thresh=0.95), train_pred)
-
-#Preprocess data to impute NAs
-preproc <- preProcess(train_pred, method="knnImpute")
+#Preprocess data
+preproc <- preProcess(train_pred, method=c("center", "scale", "nzv", "medianImpute", "pca"))
 
 train_pred <- predict(preproc, train_pred)
+
 test_pred <- predict(preproc, test_pred)
 
-model_pca <- train(train[, dep_var] ~., method="rf", trControl=train.ctrl, data=train_pca)
+#Train model
 model <- train(train[, dep_var] ~., method="rf", trControl=train.ctrl, data=train_pred)
 
-test_pca <- predict(preproc, test_pred)
-
-cm_pca <- confusionMatrix(test[, dep_var], predict(model_pca, test_pca))
-
+#Evaluate model performance using test set
 cm <- confusionMatrix(test[, dep_var], predict(model, test_pred))
 
-cm_pca$overall["Accuracy"]
 cm$overall["Accuracy"]
+
+eval_data_pred <- predict(preproc, eval_data)
+predict(model, eval_data_pred)

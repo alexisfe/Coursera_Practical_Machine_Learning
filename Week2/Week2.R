@@ -9,7 +9,6 @@ training = adData[-testIndex,]
 testing = adData[testIndex,]
 
 #Question 2
-
 library(ggplot2)
 library(AppliedPredictiveModeling)
 data(concrete)
@@ -19,10 +18,26 @@ inTrain = createDataPartition(mixtures$CompressiveStrength, p = 3/4)[[1]]
 training = mixtures[ inTrain,]
 testing = mixtures[-inTrain,]
 
-ggplot(testing, aes(Superplasticizer)) + geom_histogram() + scale_x_log10()
+ggplot(mapping=aes(x=as.numeric(row.names(training)), y=training$Superplasticizer, colour=factor(cut2(training$FlyAsh, cuts=4)))) + 
+  geom_point()
+
+ggplot(data=training, aes(x=FlyAsh, y=Superplasticizer)) + geom_point()
+
+ggplot(data=training, aes(x=Age, y=Superplasticizer)) + geom_point()
 
 #Question 3
+library(AppliedPredictiveModeling)
+data(concrete)
+library(caret)
+set.seed(1000)
+inTrain = createDataPartition(mixtures$CompressiveStrength, p = 3/4)[[1]]
+training = mixtures[ inTrain,]
+testing = mixtures[-inTrain,]
 
+ggplot(training, aes(log(Superplasticizer+1))) + geom_histogram()
+
+#Question 4
+library(reshape2)
 library(ggplot2)
 library(caret)
 library(AppliedPredictiveModeling)
@@ -56,7 +71,7 @@ test <- predict(preproc, testing_pred)
 
 confusionMatrix(testing$diagnosis, predict(model, test))
 
-#Question 4
+#Question 5
 library(caret)
 library(AppliedPredictiveModeling)
 set.seed(3433)
